@@ -37,13 +37,16 @@ class VentaController extends Controller
     {
         //$productos = Producto::select('ID','ID_UnidadMedida','Descripcion','Stock','Precio1','Precio2','Precio3');
         $productos_generales=DB::table('productos')
+        ->where('productos.Estado', "1")
         ->join('unidad_medidas','productos.ID_UnidadMedida','=','unidad_medidas.ID')
         ->select('productos.ID','productos.Nombre','productos.Stock','unidad_medidas.Nombre as UnidadMedida','productos.Precio1 as Precio1','productos.Precio2 as Precio2','productos.Precio3 as Precio3');
         $productos_empaques=DB::table('producto_empaques')
         ->join('unidad_medidas','producto_empaques.ID_UnidadMedida','=','unidad_medidas.ID')
         ->join('productos','productos.ID','=','producto_empaques.ID_Producto')
+        ->where('productos.Estado', "1")
         ->select(DB::raw("CONCAT(producto_empaques.ID_Producto,'-',unidad_medidas.ID) as ID"),'productos.Nombre',DB::raw('productos.Stock / producto_empaques.Equivalencia as Stock'),'unidad_medidas.Nombre as UnidadMedida','producto_empaques.Precio1 as Precio1','producto_empaques.Precio2 as Precio2','producto_empaques.Precio3 as Precio3');
         $productos=$productos_generales->union($productos_empaques);
+        //echo json_encode($productos);
         return Datatables::of($productos)->make(true);
     }
     /**
@@ -53,7 +56,7 @@ class VentaController extends Controller
      */
     public function create()
     {
-        $clientes=Cliente::all();
+        $clientes=Cliente::where('Estado', 1)->get();
         $tipo_comprobantes=Tipo_Comprobante::all();
         $impuestos=Impuesto::all();
         $productos=Producto::all();
@@ -82,10 +85,10 @@ class VentaController extends Controller
         $Venta->ID_Usuario = Auth::id();
 
         $Venta->ID_Cliente = $request->get('seleccionarCliente');
-        $Venta->MontoBruto = $request->get('seleccionarCliente');
+        $Venta->MontoBruto = $request->get('MontoBruto');
         $Venta->Impuesto= $request->get('nuevoPrecioImpuesto');
-        $Venta->Total= $request->get('nuevoPrecioNeto');
-        $Venta->MontoReal= $request->get('nuevoTotalVenta');
+        $Venta->Total= $request->get('Total');
+        $Venta->MontoReal= $request->get('MontoReal');
         $Venta->DescuentoFijo= $request->get('nuevoDescuentoFijo');
         $Venta->DescuentoPorcentual= $request->get('nuevoDescuentoPorcentual');
         $Venta->Estado= "1";
@@ -135,7 +138,7 @@ class VentaController extends Controller
             {
                 $Venta_detalle->ID_Producto=$detalle->id;
                 $unidadmedida=Producto::where('productos.ID', $detalle->id)->select('productos.ID_UnidadMedida')->first();
-                $Venta_detalle->ID_UnidadMedida=$unidadmedida;
+                $Venta_detalle->ID_UnidadMedida=$unidadmedida['ID_UnidadMedida'];
                 $id_producto=$detalle->id;
                 $equivalencia=1;
 
@@ -156,10 +159,10 @@ class VentaController extends Controller
 
             $Venta_detalle->Cantidad=$detalle->cantidad;
             $Venta_detalle->PrecioUnitario=$detalle->precio;
-            $Venta_detalle->MontoBruto=$detalle->total;
+            $Venta_detalle->MontoBruto=$detalle->montoBruto;
             $Venta_detalle->DescuentoFijo=$detalle->descuento_fijo;
             $Venta_detalle->DescuentoPorcentual=$detalle->descuento_porcentual;
-            $Venta_detalle->MontoReal=$detalle->total;
+            $Venta_detalle->MontoReal=$detalle->montoReal;
             $Venta_detalle->Impuesto=$detalle->impuesto_lineal;
             $Venta_detalle->Total=$detalle->total;
             $Venta_detalle->Estado="0";
@@ -174,83 +177,6 @@ class VentaController extends Controller
   			}
 
         return redirect('/ventas/create');
-        //actualizar Numeracion serie
-        /*
-  			$tablaClientes = "clientes";
-
-  			$item = "id";
-  			$valor = $_POST["seleccionarCliente"];
-
-  			$traerCliente = ModeloClientes::mdlMostrarClientes($tablaClientes, $item, $valor);
-
-  			$item1a = "compras";
-  			$valor1a = array_sum($totalProductosComprados) + $traerCliente["compras"];
-
-  			$comprasCliente = ModeloClientes::mdlActualizarCliente($tablaClientes, $item1a, $valor1a, $valor);
-
-  			$item1b = "ultima_compra";
-
-  			date_default_timezone_set('America/Lima');
-
-  			$fecha = date('Y-m-d');
-  			$hora = date('H:i:s');
-  			$valor1b = $fecha.' '.$hora;
-
-  			$fechaCliente = ModeloClientes::mdlActualizarCliente($tablaClientes, $item1b, $valor1b, $valor);
-
-
-        */
-
-  			/*=============================================
-  			GUARDAR LA COMPRA
-  			=============================================*/
-
-  			/*$tabla = "ventas";
-
-  			//echo $_POST["seleccionarTipoComprobante"];
-  			$tipoComprobante = ModeloSeries::mdlMostrarTipoComprobante('tipo_comprobante','id',$_POST["seleccionarTipoComprobante"],'id');
-  			//$numero = ModeloSeries::mdlObtenerNumero($_POST["seleccionarTipoComprobante"]);
-  			//var_dump($tipoComprobante);
-  			$datos = array("id_vendedor"=>$_POST["idVendedor"],
-  						   "id_cliente"=>$_POST["seleccionarCliente"],
-  						   "codigo"=>$tipoComprobante["numeroActual"], //$_POST["nuevaVenta"],
-  						   "productos"=>$_POST["listaProductos"],
-  						   "impuesto"=>$_POST["nuevoPrecioImpuesto"],
-  						   "neto"=>$_POST["nuevoPrecioNeto"],
-  						   "total"=>$_POST["totalVenta"],
-  						   "metodo_pago"=>$_POST["listaMetodoPago"],
-  							 "id_tipoComprobante"=>$_POST["seleccionarTipoComprobante"],
-  							 "serie"=>$tipoComprobante["serie"]
-  						 );
-
-  			$respuesta = ModeloVentas::mdlIngresarVenta($tabla, $datos);
-
-  			if($respuesta == "ok"){
-  				$respuesta=ModeloSeries::mdlIncrementaNumero('tipo_comprobante',$_POST["seleccionarTipoComprobante"]);
-  				if($respuesta == "ok"){
-  					echo'<script>
-
-  					localStorage.removeItem("rango");
-
-  					swal({
-  						  type: "success",
-  						  title: "La venta ha sido guardada correctamente",
-  						  showConfirmButton: true,
-  						  confirmButtonText: "Cerrar"
-  						  }).then(function(result){
-  									if (result.value) {
-
-  									window.location = "ventas";
-
-  									}
-  								})
-
-  					</script>';
-  				}else{
-  					echo "$respuesta";
-  				}
-
-  			}*/
 
     }
 
@@ -411,7 +337,7 @@ class VentaController extends Controller
             //registrar movimiento
         }
 
-        return back()->withInput();
+        return redirect('/ventas/create');
     }
 
     /**

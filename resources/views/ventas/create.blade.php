@@ -274,9 +274,7 @@
 
                               <input type="number" class="form-control input-lg"  id="nuevoImpuestoVenta" name="nuevoImpuestoVenta" placeholder="0" value="0" readonly required>
 
-                               <input type="hidden" name="nuevoPrecioImpuesto" id="nuevoPrecioImpuesto" required>
-
-                               <input type="hidden" name="nuevoPrecioNeto" id="nuevoPrecioNeto" required>
+                              <input type="hidden" name="nuevoPrecioImpuesto" id="nuevoPrecioImpuesto" required>
 
                               <span class="input-group-addon"><i class="fa fa-percent"></i></span>
 
@@ -291,10 +289,11 @@
 
                               <span class="input-group-addon">S/.</i></span>
 
-                              <input type="text" class="form-control input-lg" id="nuevoTotalVenta" name="nuevoTotalVenta"  value="0" total="" placeholder="00000" readonly required>
+                              <input type="hidden" name="MontoBruto" id="MontoBruto" value="0">
 
-                              <input type="hidden" name="totalVenta" id="totalVenta">
+                              <input type="hidden" name="MontoReal" id="MontoReal" value="0">
 
+                              <input type="text" class="form-control input-lg" id="Total" name="Total"  value="0" placeholder="0" readonly required>
 
                             </div>
 
@@ -334,9 +333,7 @@
 
                             <div class="input-group">
 
-                              <input type="number" class="form-control input-lg"  id="nuevoDescuentoPorcentual" name="nuevoDescuentoPorcentual" min="0" placeholder="0" value="0" required>
-
-
+                              <input type="number" step="any" class="form-control input-lg"  id="nuevoDescuentoPorcentual" name="nuevoDescuentoPorcentual" min="0"  max="100" placeholder="0" value="0" required>
 
                               <span class="input-group-addon"><i class="fa fa-percent"></i></span>
 
@@ -350,9 +347,8 @@
 
                               <span class="input-group-addon">S/.</i></span>
 
-                              <input type="text" class="form-control input-lg" id="nuevoDescuentoFijo" name="nuevoDescuentoFijo" total="" placeholder="00000" value="0" required>
+                              <input type="number" step="any" class="form-control input-lg" id="nuevoDescuentoFijo" name="nuevoDescuentoFijo" min="0" placeholder="0" value="0" required>
 
-                              <input type="hidden" name="totalVenta" id="totalVenta">
 
 
                             </div>
@@ -393,7 +389,7 @@
 
             			 		<span class="input-group-addon"><i class="ion ion-social-usd"></i></span>
 
-            			 		<input type="text" class="form-control" id="nuevoValorEfectivo" placeholder="000000" required>
+            			 		<input type="text" class="form-control" id="nuevoValorEfectivo" placeholder="0000" required>
 
             			 	</div>
 
@@ -405,7 +401,7 @@
 
             			 		<span class="input-group-addon"><i class="ion ion-social-usd"></i></span>
 
-            			 		<input type="text" class="form-control" id="nuevoCambioEfectivo" placeholder="000000" readonly required>
+            			 		<input type="text" class="form-control" id="nuevoCambioEfectivo" placeholder="0000" readonly required>
 
             			 	</div>
 
@@ -655,18 +651,11 @@ var table2 = $('.tablaVentas').DataTable({
   "sserverSide": true,
 
 	"ajax":"{{route('api.index')}}",
-  //"ajax":{url: "/listadoproductos"},
-
   "columns": [
       {"data" : "ID"},
       {"data" : "Nombre"},
       {"data" : "UnidadMedida"},
       {"data" : "Stock", render: $.fn.dataTable.render.number( ',', '.', 4, '' ) },
-      /*{
-        "sTitle":"Stock",
-			 "defaultContent": '<div class="btn-group"><button class="btn btn-success limiteStock"></button></div>'
-
-      },*/
       {"data" : "Precio1","sTitle":"Precio1", render: $.fn.dataTable.render.number( ',','.', 2, 'S/' ), name: 'Precio',visible:true },
       {"data" : "Precio2",visible:false },
       {"data" : "Precio3",visible:false },
@@ -715,16 +704,15 @@ $(".formularioVenta").on("change", "select.seleccionarTipoComprobante", function
   var id_negocio=$(".nuevoVendedor").attr("negocio");
   $.ajax({
       type: "GET",
-      url: "numeracion_series/"+id_comprobante+"/"+id_negocio,
+      url: "/numeracion_serie/"+id_comprobante+"/"+id_negocio,
       dataType:"json",
-      success: function(response) {
-        //alert(response);
+      success:function(response) {
           var serie=response["CodigoSerie"];
           var numeracion=response["NumeroActual"];
           $(".nuevaSerie").val(serie);
           $(".nuevaVenta").val(numeracion);
-      }
-      //error:function(response,status,error){alert(response);}
+      },
+      error:function(response,status,error){}
   });
 
   // SUMAR TOTAL DE PRECIOS
@@ -734,7 +722,7 @@ $(".formularioVenta").on("change", "select.seleccionarTipoComprobante", function
 
   // AGREGAR IMPUESTO
 
-  agregarImpuesto()
+  //agregarImpuesto()
   //agregarDescuentoPorcentual()
   //agregarDescuentoFijo()
 
@@ -791,7 +779,7 @@ $(".formularioVenta").on("change", "select.seleccionarImpuesto", function(){
 
   // AGREGAR IMPUESTO
 
-  agregarImpuesto()
+  //agregarImpuesto()
   //agregarDescuentoPorcentual()
   //agregarDescuentoFijo()
 
@@ -878,44 +866,6 @@ $(".formularioVenta").on("change", "select.seleccionarPrecio", function(){
 })
 
 
-/*=============================================
-FUNCIÃ“N PARA CARGAR LAS IMÃGENES CON EL PAGINADOR Y EL FILTRO
-=============================================*/
-
-/*
-function cargarStock(){
-
-  var data = table.row( $(this).parents('tr') ).data();
-
-	 var limiteStock = $(".limiteStock");
-
-	 for(var i = 0; i < limiteStock.length; i ++){
-
-	    var data = table2.row( $(limiteStock[i]).parents('tr') ).data();
-
-	    if(data['Stock'] < 10){
-
-	    	$(limiteStock[i]).addClass("btn-danger");
-	    	$(limiteStock[i]).html(data['Stock']);
-
-	    }else{
-
-	    	$(limiteStock[i]).addClass("btn-success");
-	    	$(limiteStock[i]).html(data['Stock']);
-	    }
-
-  	}
-
-
-}
-
-$('.tablaVentas').on( 'draw.dt', function () {
-
-  cargarStock();
-
-})
-*/
-
 $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
 
 	var idProducto = $(this).attr("idProducto");
@@ -981,7 +931,7 @@ $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
 
     	          '<div class="col-xs-2 ingresoCantidad" style="padding-right:0px">'+
 
-      	             '<input type="number" step="any" class="form-control nuevaCantidadProducto" name="nuevaCantidadProducto" min="0" value="1" stock="'+stock+'" nuevoStock="'+Number(stock-1)+'" required>'+
+      	             '<input type="number" step="any" class="form-control nuevaCantidadProducto" name="nuevaCantidadProducto" min="0" value="0" stock="'+stock+'" nuevoStock="'+stock+'" required>'+
 
     	          '</div>'+
 
@@ -989,13 +939,13 @@ $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
 
                 '<div class="col-xs-2 ingresoDescuentoPorcentual" style="padding-right:0px">'+
 
-                    '<input type="number" step="any" class="form-control nuevoDescuentoLinealPorcentual" descuentoPorcentual="0" name="nuevoDescuentoLinealPorcentual" min="0" max="100" value="0" >'+
+                    '<input type="number" step="any" class="form-control nuevoDescuentoLinealPorcentual"  name="nuevoDescuentoLinealPorcentual" min="0" max="100" value="0" >'+
 
                 '</div>' +
 
                 '<div class="col-xs-2 ingresoDescuentoFijo" style="padding-left:0px">'+
 
-                    '<input type="number" step="any" class="form-control nuevoDescuentoLinealFijo" descuentoLineal="0" name="nuevoDescuentoLinealFijo" min="0" value="0" >'+
+                    '<input type="number" step="any" class="form-control nuevoDescuentoLinealFijo"  name="nuevoDescuentoLinealFijo" min="0" value="0" >'+
 
                 '</div>' +
 
@@ -1008,7 +958,7 @@ $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
 
                     '<input type="hidden" class="form-control nuevoImpuestoLineal" name="nuevoImpuestoLineal" value="'+impuesto+'" required>'+
 
-    	              '<input type="text" step="any" class="form-control nuevoPrecioProducto" precioReal="'+precio+'" name="nuevoPrecioProducto" value="'+preciofinal+'" readonly required>'+
+    	              '<input type="text" step="any" class="form-control nuevoPrecioProducto" precioReal="'+precio+'" montoBruto="0" montoReal="0" name="nuevoPrecioProducto" value="0" readonly required>'+
 
     	            '</div>'+
 
@@ -1022,7 +972,7 @@ $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
 
 	        // AGREGAR IMPUESTO
 
-	        agregarImpuesto()
+	        //agregarImpuesto()
           //agregarDescuentoPorcentual()
           //agregarDescuentoFijo()
 
@@ -1030,6 +980,9 @@ $(".tablaVentas tbody").on("click", "button.agregarProducto", function(){
 	        listarProductos()
 
 	        // PONER FORMATO AL PRECIO DE LOS PRODUCTOS
+
+          $(".nuevoDescuentoLinealPorcentual").number(true, 4);
+          $(".nuevoDescuentoLinealFijo").number(true, 4);
 
 	        $(".nuevoPrecioProducto").number(true, 2);
 
@@ -1077,9 +1030,12 @@ $(".formularioVenta").on("click", "button.quitarProducto", function(){
 	if($(".nuevoProducto").children().length == 0){
 
 		//$("#nuevoImpuestoVenta").val(0);
-		$("#nuevoTotalVenta").val(0);
-		$("#totalVenta").val(0);
-		$("#nuevoTotalVenta").attr("total",0);
+		$("#MontoBruto").val(0);
+    $("#nuevoReal").val(0);
+		$("#Total").val(0);
+    $("#nuevoDescuentoFijo").val(0);
+    $("#nuevoDescuentoPorcentual").val(0);
+
 
 	}else{
 
@@ -1106,105 +1062,97 @@ AGREGANDO PRODUCTOS DESDE EL BOTÃ“N PARA DISPOSITIVOS
 
 $(".btnAgregarProducto").click(function(){
 
-	$.ajax({
+      $(".nuevoProducto").append(
 
-		    url:"/listarproductos",
-        type: "GET",
-      	dataType:"json",
-      	success:function(respuesta){
+      '<div class="row" style="padding:5px 15px">'+
 
-          $(".nuevoProducto").append(
+      '<!-- Descripcion del producto -->'+
 
-          '<div class="row" style="padding:5px 15px">'+
+      '<div class="col-xs-4" style="padding-right:0px">'+
 
-          '<!-- Descripcion del producto -->'+
+        '<div class="input-group">'+
 
-          '<div class="col-xs-4" style="padding-right:0px">'+
+          '<span class="input-group-addon"><button type="button" class="btn btn-danger btn-xs quitarProducto" idProducto><i class="fa fa-times"></i></button></span>'+
 
-            '<div class="input-group">'+
+          '<select class="form-control nuevaDescripcionProducto" idProducto name="nuevaDescripcionProducto" required>'+
 
-              '<span class="input-group-addon"><button type="button" class="btn btn-danger btn-xs quitarProducto" idProducto><i class="fa fa-times"></i></button></span>'+
+            '<option>Seleccione el producto</option>'+
 
-              '<select class="form-control nuevaDescripcionProducto" idProducto name="nuevaDescripcionProducto" required>'+
+          '</select>'+
 
-                '<option>Seleccione el producto</option>'+
+        '</div>'+
 
-              '</select>'+
+      '</div>'+
 
-            '</div>'+
+      '<!-- Cantidad del producto -->'+
 
-          '</div>'+
+      '<div class="col-xs-2 ingresoCantidad" style="padding-right:0px">'+
 
-          '<!-- Cantidad del producto -->'+
+         '<input type="number" step="any" class="form-control nuevaCantidadProducto" name="nuevaCantidadProducto" min="0" value="0" stock nuevoStock required>'+
 
-          '<div class="col-xs-2 ingresoCantidad" style="padding-right:0px">'+
+      '</div>' +
 
-             '<input type="number" step="any" class="form-control nuevaCantidadProducto" name="nuevaCantidadProducto" min="0" value="1" stock nuevoStock required>'+
+      '<!-- Descuento del producto -->'+
 
-          '</div>' +
+      '<div class="col-xs-2 ingresoDescuentoPorcentual" style="padding-right:0px">'+
 
-          '<!-- Descuento del producto -->'+
+          '<input type="number" step="any" class="form-control nuevoDescuentoLinealPorcentual" name="nuevoDescuentoLinealPorcentual" min="0" max="100" value="0" >'+
 
-          '<div class="col-xs-2 ingresoDescuentoPorcentual" style="padding-right:0px">'+
+      '</div>' +
 
-              '<input type="number" step="any" class="form-control nuevoDescuentoLinealPorcentual" descuentoPorcentual="0" name="nuevoDescuentoLinealPorcentual" min="0" max="100" value="0" >'+
+      '<div class="col-xs-2 ingresoDescuentoFijo" style="padding-left:0px">'+
 
-          '</div>' +
+          '<input type="number" step="any" class="form-control nuevoDescuentoLinealFijo"  name="nuevoDescuentoLinealFijo" min="0" value="0" >'+
 
-          '<div class="col-xs-2 ingresoDescuentoFijo" style="padding-left:0px">'+
+      '</div>' +
 
-              '<input type="number" step="any" class="form-control nuevoDescuentoLinealFijo" descuentoLineal="0" name="nuevoDescuentoLinealFijo" min="0" value="0" >'+
+      '<!-- Precio del producto -->'+
 
-          '</div>' +
+      '<div class="col-xs-2 ingresoPrecio" style="padding-left:0px">'+
 
-          '<!-- Precio del producto -->'+
+        '<div class="input-group">'+
 
-          '<div class="col-xs-2 ingresoPrecio" style="padding-left:0px">'+
+          '<input type="hidden" class="form-control nuevoImpuestoLineal" name="nuevoImpuestoLineal"  value="" required>'+
 
-            '<div class="input-group">'+
+          '<input type="text" step="any" class="form-control nuevoPrecioProducto" precioReal="" montoBruto="" montoReal="" name="nuevoPrecioProducto" value="" readonly required>'+
 
-              '<input type="hidden" class="form-control nuevoImpuestoLineal" name="nuevoImpuestoLineal"  value="" required>'+
+        '</div>'+
 
-              '<input type="text" step="any" class="form-control nuevoPrecioProducto" precioReal="" name="nuevoPrecioProducto" value="" readonly required>'+
+      '</div>'+
 
-            '</div>'+
-
-          '</div>'+
-
-        '</div>');
+    '</div>');
 
 
-	        // AGREGAR LOS PRODUCTOS AL SELECT
+    //var table2 = $('.tablaVentas').DataTable();
+    table2
+    .data()
+    .each( function ( value, index ) {
+      $(".nuevaDescripcionProducto").append(
 
-          respuesta.forEach(funcionForEach);
+          '<option idProducto="'+value.id+'" value="'+value.ID+'">'+value.Nombre+' '+value.UnidadMedida+'</option>'
+      )
+    } );
 
-          function funcionForEach(item, index){
+     // SUMAR TOTAL DE PRECIOS
 
-            $(".nuevaDescripcionProducto").append(
+	  sumarTotalPrecios()
 
-                '<option idProducto="'+item.id+'" value="'+item.ID+'">'+item.Nombre+' '+item.UnidadMedida+'</option>'
-            )
+	       // AGREGAR IMPUESTO
 
+    //agregarImpuesto()
+    //agregarDescuentoPorcentual()
+    //agregarDescuentoFijo()
 
-	         }
-	         // SUMAR TOTAL DE PRECIOS
+    // PONER FORMATO AL PRECIO DE LOS PRODUCTOS
 
-    		     sumarTotalPrecios()
+      listarProductos()
 
-    		       // AGREGAR IMPUESTO
+      $(".nuevoDescuentoLinealPorcentual").number(true, 4);
+      $(".nuevoDescuentoLinealFijo").number(true, 4);
 
-	        agregarImpuesto()
-          //agregarDescuentoPorcentual()
-          //agregarDescuentoFijo()
-
-	        // PONER FORMATO AL PRECIO DE LOS PRODUCTOS
-
-	        $(".nuevoPrecioProducto").number(true, 2);
-
-      	}
+    $(".nuevoPrecioProducto").number(true, 2);
 
 
-	})
 
 })
 
@@ -1242,7 +1190,7 @@ $(".formularioVenta").on("change", "select.nuevaDescripcionProducto", function()
 
       	    $(nuevaDescripcionProducto).attr("idProducto", producto["ID"]);
       	    $(nuevaCantidadProducto).attr("stock", producto["Stock"]);
-      	    $(nuevaCantidadProducto).attr("nuevoStock", Number(producto["Stock"])-1);
+      	    $(nuevaCantidadProducto).attr("nuevoStock",producto["Stock"]);
             var precio=0;
             if(combo_precio=="Precio1")
             {
@@ -1277,7 +1225,16 @@ $(".formularioVenta").on("change", "select.nuevaDescripcionProducto", function()
 
   	      // AGRUPAR PRODUCTOS EN FORMATO JSON
 
-	        listarProductos()
+          sumarTotalPrecios()
+
+      	       // AGREGAR IMPUESTO
+
+          //agregarDescuentoPorcentual()
+          //agregarDescuentoFijo()
+
+          // PONER FORMATO AL PRECIO DE LOS PRODUCTOS
+
+            listarProductos()
 
       	}
 
@@ -1300,20 +1257,28 @@ $(".formularioVenta").on("change", "input.nuevaCantidadProducto", function(){
 
   var impuesto = $(this).parent().parent().children(".ingresoPrecio").children().children(".nuevoImpuestoLineal");
 
-  var subtotal=precio.attr("precioReal")*$(this).val();
+  var MontoBruto=precio.attr("precioReal")*$(this).val();
 
-  var descuento=descuentoPorcentual.val()*subtotal/100;
+  precio.attr("montoBruto",MontoBruto);
 
-  var subtotal=precio.attr("precioReal")*$(this).val()-descuento;
+  var descuento=descuentoPorcentual.val()*MontoBruto/100;
 
-  var impuestosuma = $("#nuevoImpuestoVenta").val()*subtotal/100;
+  descuentoFijo.val(descuento);
 
-	var precioFinal =subtotal+impuestosuma;
-  //var equivalencia = precio.attr("equivalencia");
+  var MontoReal=MontoBruto-descuento;
+
+  precio.attr("montoReal",MontoReal);
+
+  var impuestosuma = $("#nuevoImpuestoVenta").val()*MontoReal/100;
+
+	var Total =MontoReal+impuestosuma;
+
+  precio.val(Total);
 
   impuesto.val(impuestosuma);
-  descuentoFijo.val(descuento);
-	precio.val(precioFinal);
+
+
+
 
 	var nuevoStock = Number($(this).attr("stock")) - Number($(this).val());
 
@@ -1324,7 +1289,7 @@ $(".formularioVenta").on("change", "input.nuevaCantidadProducto", function(){
 
 	if(Number($(this).val()) > Number($(this).attr("stock"))){
 
-		$(this).val(1);
+		$(this).val(0);
 
 		swal({
 	      title: "La cantidad supera el Stock",
@@ -1341,7 +1306,7 @@ $(".formularioVenta").on("change", "input.nuevaCantidadProducto", function(){
 
 	// AGREGAR IMPUESTO
 
-    agregarImpuesto()
+    //agregarImpuesto()
     //agregarDescuentoPorcentual()
     //agregarDescuentoFijo()
 
@@ -1359,26 +1324,29 @@ $(".formularioVenta").on("change", "input.nuevoDescuentoLinealPorcentual", funct
 
 
 	var precio = $(this).parent().parent().children(".ingresoPrecio").children().children(".nuevoPrecioProducto");
-  var descuento = $(this).parent().parent().children(".ingresoDescuentoFijo").children(".nuevoDescuentoLinealFijo");
+  var descuentoFijo = $(this).parent().parent().children(".ingresoDescuentoFijo").children(".nuevoDescuentoLinealFijo");
   var cantidad = $(this).parent().parent().children(".ingresoCantidad").children(".nuevaCantidadProducto").val();
 
   var impuesto = $(this).parent().parent().children(".ingresoPrecio").children().children(".nuevoImpuestoLineal");
 
-  var subtotal=precio.attr("precioReal")*cantidad;
+  var MontoBruto=precio.attr("precioReal")*cantidad;
 
-  var descuentoFijo=$(this).val()*subtotal/100;
+  var descuentofijo=$(this).val()*MontoBruto/100;
 
-	var preciosinimpuesto= subtotal-descuentoFijo;
+  descuentoFijo.val(descuentofijo);
 
-  var impuestosuma = preciosinimpuesto * $("#nuevoImpuestoVenta").val() /100;
+  var MontoReal=MontoBruto-descuentofijo;
 
-  var precioFinal = preciosinimpuesto+impuestosuma;
+  precio.attr("montoReal",MontoReal);
 
-  //var equivalencia = precio.attr("equivalencia");
+  var impuestosuma = $("#nuevoImpuestoVenta").val()*MontoReal/100;
 
-	precio.val(precioFinal);
-  descuento.val(descuentoFijo);
+  var Total =MontoReal+impuestosuma;
+
+  precio.val(Total);
+
   impuesto.val(impuestosuma);
+
 	// SUMAR TOTAL DE PRECIOS
 
 	sumarTotalPrecios()
@@ -1404,37 +1372,44 @@ MODIFICAR Descuento Fijo
 $(".formularioVenta").on("change", "input.nuevoDescuentoLinealFijo", function(){
 
 	var precio = $(this).parent().parent().children(".ingresoPrecio").children().children(".nuevoPrecioProducto");
-  var descuento = $(this).parent().parent().children(".ingresoDescuentoPorcentual").children(".nuevoDescuentoLinealPorcentual");
+  var descuentoPorcentual = $(this).parent().parent().children(".ingresoDescuentoPorcentual").children(".nuevoDescuentoLinealPorcentual");
   var cantidad = $(this).parent().parent().children(".ingresoCantidad").children(".nuevaCantidadProducto").val();
 
-  var impuesto = $(this).parent().parent().children(".ingresoPrecio").children().children(".nuevoImpuestoLineal").attr("impuesto");
+  var impuesto = $(this).parent().parent().children(".ingresoPrecio").children().children(".nuevoImpuestoLineal");
 
-  var subtotal=precio.attr("precioReal")*cantidad;
+  var MontoBruto=precio.attr("precioReal")*cantidad;
 
-  var descuentoPorcentual=$(this).val()*100/subtotal;
+  var descuentoporcentual=$(this).val()*100/MontoBruto;
 
-	var preciosinimpuesto= subtotal-$(this).val();
+  var descuentofijo=descuentoporcentual*MontoBruto/100;
 
-  var impuestosuma = preciosinimpuesto * $("#nuevoImpuestoVenta").val() /100;
+  descuentoPorcentual.val(descuentoporcentual);
 
-  var precioFinal = preciosinimpuesto+impuestosuma;
+  var MontoReal=MontoBruto-descuentofijo;
 
+  precio.attr("montoReal",MontoReal);
 
-	precio.val(precioFinal);
-  descuento.val(descuentoPorcentual);
+  var impuestosuma = $("#nuevoImpuestoVenta").val()*MontoReal/100;
+
+  var Total =MontoReal+impuestosuma;
+
+  precio.val(Total);
+
+  impuesto.val(impuestosuma);
 	// SUMAR TOTAL DE PRECIOS
 
 	sumarTotalPrecios()
 
 	// AGREGAR IMPUESTO
 
-    agregarImpuesto()
+    //agregarImpuesto()
     //agregarDescuentoPorcentual()
     //agregarDescuentoFijo()
 
     // AGRUPAR PRODUCTOS EN FORMATO JSON
 
     listarProductos()
+
 
 })
 
@@ -1445,11 +1420,22 @@ SUMAR TODOS LOS PRECIOS
 function sumarTotalPrecios(){
 
 	var precioItem = $(".nuevoPrecioProducto");
-	var arraySumaPrecio = [];
+  var impuestoItem = $(".nuevoImpuestoLineal");
+
+  var arraySumaImpuesto = [];
+  var arraySumaMontoBruto = [];
+	var arraySumaMontoReal = [];
+  var arraySumaTotal = [];
+
+  for(var i = 0; i < impuestoItem.length; i++){
+    arraySumaImpuesto.push(Number($(impuestoItem[i]).val()));
+	}
 
 	for(var i = 0; i < precioItem.length; i++){
-
-		 arraySumaPrecio.push(Number($(precioItem[i]).val()));
+		 arraySumaMontoBruto.push(Number($(precioItem[i]).attr("montoBruto")));
+     arraySumaMontoReal.push(Number($(precioItem[i]).attr("montoReal")));
+     arraySumaTotal.push(Number($(precioItem[i]).val()));
+     //alert($(precioItem[i]).val());
 
 	}
 
@@ -1458,12 +1444,20 @@ function sumarTotalPrecios(){
 		return total + numero;
 
 	}
+  var sumaImpuesto = arraySumaImpuesto.reduce(sumaArrayPrecios);
+  var sumaMontoBruto = arraySumaMontoBruto.reduce(sumaArrayPrecios);
+  var sumaMontoReal = arraySumaMontoReal.reduce(sumaArrayPrecios);
+	var sumaTotal = arraySumaTotal.reduce(sumaArrayPrecios);
 
-	var sumaTotalPrecio = arraySumaPrecio.reduce(sumaArrayPrecios);
+  $("#nuevoPrecioImpuesto").val(sumaImpuesto);
 
-	$("#nuevoTotalVenta").val(sumaTotalPrecio);
-	$("#totalVenta").val(sumaTotalPrecio);
-	$("#nuevoTotalVenta").attr("total",sumaTotalPrecio);
+	$("#MontoBruto").val(sumaMontoBruto);
+  //alert($("#MontoBruto").val());
+	$("#MontoReal").val(sumaMontoReal);
+  //alert($("#MontoReal").val());
+	$("#Total").val(sumaTotal);
+  //alert($("#Total").val());
+  //alert($("#Total").val());
 
 
 }
@@ -1474,47 +1468,20 @@ FUNCIÃ“N AGREGAR IMPUESTO
 
 function agregarImpuesto(){
 
-	var impuesto = $("#nuevoImpuestoVenta").val();
-
-	var precioTotal = $("#nuevoTotalVenta").attr("total");
-
-	var precioImpuesto = Number(precioTotal * impuesto/100);
-
-	var totalConImpuesto = Number(precioImpuesto) + Number(precioTotal);
-  //alert(totalConImpuesto);
-
-	$("#nuevoTotalVenta").val(totalConImpuesto);
-
-  $("#nuevoTotalVenta").attr("total",totalConImpuesto);
-
-	$("#totalVenta").val(totalConImpuesto);
-
-	$("#nuevoPrecioImpuesto").val(precioImpuesto);
-
-
-	$("#nuevoPrecioNeto").val(precioTotal);
-
 
 
 }
 
-
 /*=============================================
-CUANDO CAMBIA EL IMPUESTO
+FORMATO AL PRECIO FINAL
 =============================================*/
 
-$("#nuevoImpuestoVenta").change(function(){
+$("#Total").number(true, 2);
 
-	agregarImpuesto()
+$("#nuevoDescuentoLinealFijo").number(true, 4);
 
-});
+$("#nuevoDescuentoPorcentual").number(true, 4);
 
-
-$("select.nuevoImpuestoVenta").change(function(){
-
-	agregarImpuesto()
-
-});
 
 /*=============================================
 FUNCIÃ“N AGREGAR DESCUENTO
@@ -1523,29 +1490,27 @@ FUNCIÃ“N AGREGAR DESCUENTO
 function agregarDescuentoFijo(){
 
 	var descuentoPorcentual = $("#nuevoDescuentoPorcentual").val();
-  var precioTotal = $("#nuevoTotalVenta").attr("total");
-	var descuentoFijo =  Number(precioTotal * descuentoPorcentual/100);
 
-	var totalConImpuesto = Number(precioTotal-descuentoFijo);
+  var MontoBruto = $("#MontoBruto").val();
+
+	var descuentoFijo =  Number(MontoBruto * descuentoPorcentual/100);
 
   $("#nuevoDescuentoFijo").val(descuentoFijo);
 
-	$("#nuevoTotalVenta").val(totalConImpuesto);
+  var MontoReal = MontoBruto-descuentoFijo;
 
-	$("#totalVenta").val(totalConImpuesto);
+	$("#MontoReal").val(MontoReal);
 
-	$("#nuevoPrecioImpuesto").val(precioImpuesto);
+  var impuesto=$("#nuevoPrecioImpuesto").val();
 
-	$("#nuevoPrecioNeto").val(precioTotal);
-  sumarTotalPrecios()
+  var Total=MontoReal+Number(impuesto);
 
-	// AGREGAR IMPUESTO
+  //alert(Total);
 
-    agregarImpuesto()
+	$("#Total").val(Total);
 
-    // AGRUPAR PRODUCTOS EN FORMATO JSON
 
-    listarProductos()
+
 
 }
 
@@ -1567,30 +1532,27 @@ FUNCIÃ“N AGREGAR DESCUENTO
 function agregarDescuentoPorcentual(){
 
 	var descuentoFijo = $("#nuevoDescuentoFijo").val();
-  var precioTotal = $("#nuevoTotalVenta").attr("total");
 
-	var totalConImpuesto = Number(precioTotal-descuentoFijo);
 
-  var descuentoPorcentual =  Number((precioTotal-totalConImpuesto)*100/precioTotal);
+  var MontoBruto = $("#MontoBruto").val();
+
+	var descuentoPorcentual =  Number(descuentoFijo*100/MontoBruto);
 
   $("#nuevoDescuentoPorcentual").val(descuentoPorcentual);
 
-	$("#nuevoTotalVenta").val(totalConImpuesto);
+  var MontoReal = MontoBruto-descuentoFijo;
 
-	$("#totalVenta").val(totalConImpuesto);
+	$("#MontoReal").val(MontoReal);
 
-	$("#nuevoPrecioImpuesto").val(precioImpuesto);
+  var impuesto=$("#nuevoPrecioImpuesto").val();
 
-	$("#nuevoPrecioNeto").val(precioTotal);
-  sumarTotalPrecios()
+  var Total=MontoReal+Number(impuesto);
 
-	// AGREGAR IMPUESTO
+	$("#Total").val(Total);
 
-    agregarImpuesto()
 
-    // AGRUPAR PRODUCTOS EN FORMATO JSON
 
-    listarProductos()
+
 
 }
 
@@ -1619,7 +1581,7 @@ $(".formularioVenta").on("change", "input#nuevoValorEfectivo", function(){
 
 	var efectivo = $(this).val();
 
-	var cambio =  Number(efectivo) - Number($('#nuevoTotalVenta').val());
+	var cambio =  Number(efectivo) - Number($('#Total').val());
 
 	var nuevoCambioEfectivo = $(this).parent().parent().parent().children('#capturarCambioEfectivo').children().children('#nuevoCambioEfectivo');
 
@@ -1658,6 +1620,8 @@ function listarProductos(){
                 "descuento_porcentual" : $(descuentoPorcentual[i]).val(),
                 "descuento_fijo" : $(descuentoFijo[i]).val(),
                 "impuesto_lineal" : $(impuestolineal[i]).val(),
+                "montoBruto" : $(precio[i]).attr("montoBruto"),
+                "montoReal" : $(precio[i]).attr("montoReal"),
 							  "total" : $(precio[i]).val()})
 
 	}
@@ -1665,51 +1629,6 @@ function listarProductos(){
 	$("#listaProductos").val(JSON.stringify(listaProductos));
 
 }
-
-
-/*=============================================
-BOTON EDITAR VENTA
-=============================================*/
-
-$(".tablas").on("click", ".btnEditarVenta", function(){
-
-	var idVenta = $(this).attr("idVenta");
-	console.log("idVenta", idVenta);
-
-	window.location = "index.php?ruta=editar-venta&idVenta="+idVenta;
-
-
-})
-
-
-/*=============================================
-BORRAR VENTA
-=============================================*/
-
-$(".tablas").on("click", ".btnEliminarVenta", function(){
-
-  var idVenta = $(this).attr("idVenta");
-
-  swal({
-        title: '¿Esta seguro de borrar la venta?',
-        text: "Si no lo esta¡ puede cancelar la accion!",
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        cancelButtonText: 'Cancelar',
-        confirmButtonText: 'Si, borrar venta!'
-      }).then(function(result) {
-        if (result.value) {
-
-            window.location = "index.php?ruta=ventas&idVenta="+idVenta;
-        }
-
-  })
-
-})
-
-
 
 
 
